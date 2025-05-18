@@ -2,8 +2,6 @@
 
 A web-based tool built in Go that helps you discover and visualize AWS resources across your AWS account using AWS Config.
 
-![Infinite Pi Logo](template/infinite-pi.png)
-
 ## Features
 
 - 🔍 Search AWS resources by resource type
