@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_NAME: aws-resource-finder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.20.0'
+          cache: true
+      
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Verify code
+        run: |
+          go vet ./...
+          go test ./... -v
+
+      - name: Build Binaries
+        run: |
+          mkdir -p release
+          make build-all
+          # Create directories for each platform
+          for platform in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64; do
+            mkdir -p "release/$platform"
+            # Copy binary
+            if [[ $platform == windows* ]]; then
+              cp "bin/$BINARY_NAME-$platform.exe" "release/$platform/"
+            else
+              cp "bin/$BINARY_NAME-$platform" "release/$platform/"
+            fi
+            # Copy required assets
+            cp -r template "release/$platform/"
+            cp -r config "release/$platform/"
+          done
+          # Create archives
+          cd release
+          for platform in */; do
+            platform=${platform%/}
+            if [[ $platform == windows* ]]; then
+              zip -r "../$BINARY_NAME-$platform.zip" "$platform"
+            else
+              tar czf "../$BINARY_NAME-$platform.tar.gz" "$platform"
+            fi
+          done
+          cd ..
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd release
+          sha256sum ../*.{zip,tar.gz} > ../checksums.txt
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.zip
+            *.tar.gz
+            checksums.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## AWS Resource Finder ${{ github.ref_name }}
+            
+            This release includes binaries for:
+            - Linux (amd64, arm64)
+            - macOS (amd64, arm64)
+            - Windows (amd64)
+            
+            Each archive contains:
+            - Binary executable
+            - Template files
+            - Configuration files
+            
+            ### SHA256 Checksums
+            See checksums.txt for file verification.
+            
+            ### Installation
+            1. Download the appropriate archive for your platform
+            2. Extract the contents
+            3. Run the binary
+            
+            For detailed instructions, see the README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Release Assets
+        run: |
+          echo "Verifying release assets..."
+          for file in *.{zip,tar.gz}; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing release asset: $file"
+              exit 1
+            fi
+          done
+          echo "✅ All release assets verified"

@@ -1,14 +1,20 @@
 package main
 
 import (
+    "embed"
     "encoding/json"
     "fmt"
     "html/template"
     "log"
     "net/http"
-    "os"
     "aws-resource-finder/aws"
 )
+
+// Version is set during build
+var Version = "dev"
+
+//go:embed template/* config/*
+var content embed.FS
 
 type ResourceType struct {
     Type    string `json:"type"`
@@ -20,10 +26,9 @@ type ResourceConfig struct {
 }
 
 func loadResourceTypes() (ResourceConfig, error) {
-	// variable config has the type ResourceConfig.
     var config ResourceConfig
-    file, err := os.ReadFile("config/aws-resources.json")
-    if (err != nil) {
+    file, err := content.ReadFile("config/aws-resources.json")
+    if err != nil {
         return config, err
     }
     
@@ -38,12 +43,14 @@ type PageData struct {
 }
 
 func main() {
+    log.Printf("AWS Resource Finder version %s starting...", Version)
     resourceConfig, err := loadResourceTypes()
     if err != nil {
         log.Fatalf("Failed to load resource types: %v", err)
     }
-    fs := http.FileServer(http.Dir("./template/images"))
-    http.Handle("/images/", http.StripPrefix("/images/", fs))
+
+    fs := http.FileServer(http.FS(content))
+    http.Handle("/template/", fs)
     
     http.HandleFunc("/aws-resource-finder", func(w http.ResponseWriter, r *http.Request) {
         resourceType := r.URL.Query().Get("resourceType")
@@ -70,7 +77,7 @@ func main() {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-    t, err := template.ParseFiles(fmt.Sprintf("template/%s.html", tmpl))
+    t, err := template.ParseFS(content, fmt.Sprintf("template/%s.html", tmpl))
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
