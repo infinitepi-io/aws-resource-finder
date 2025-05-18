@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        table {
+            width: 80%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+<!-- th represents table header cells while td is for data cells -->
+ <!-- range . loops throgh the data passed from renderTemplate and extract the values. -->
+</head>
+<body>
+    <h2>AWS Resource Information From AWS Resource Config Recorder</h2>
+    <p class="note">Note: This data is not in real-time.</p>
+    <form method="GET" action="/aws-resource-finder">
+        <select name="resourceType">
+            <option value="AWS::Lambda::Function">Lambda Function</option>
+            <option value="AWS::S3::Bucket">S3 Bucket</option>
+            <option value="AWS::EC2::Instance">EC2 Instance</option>
+        </select>
+        <input type="submit" value="Find Resources">
+    </form>
+    <table>
+        <tr>
+            <th>Account ID</th>
+            <th>Resource Region</th>
+            <th>Resource Name</th>
+            <th>Resource ARN</th>
+        </tr>
+        {{range .}}
+        <tr>
+            <td>{{index . 0}}</td>
+            <td>{{index . 1}}</td>
+            <td>{{index . 2}}</td>
+            <td>{{index . 3}}</td>
+        </tr>
+        {{end}}
+    </table>
+     <!-- <h2>infinitepi-io</h2> -->
+     <p><a href="https://github.com/infinitepi-io">infinitepi-io</a></p>
+    <img src="images/pi_touch_animation.gif" alt="infinitepi-io" width="500" height="333">
+</body>
+</html>
