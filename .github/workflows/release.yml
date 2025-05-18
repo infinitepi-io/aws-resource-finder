@@ -16,7 +16,7 @@ jobs:
       BINARY_NAME: aws-resource-finder
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -56,26 +56,25 @@ jobs:
           for platform in */; do
             platform=${platform%/}
             if [[ $platform == windows* ]]; then
-              zip -r "../$BINARY_NAME-$platform.zip" "$platform"
+              zip -r "$BINARY_NAME-$platform.zip" "$platform"/*
             else
-              tar czf "../$BINARY_NAME-$platform.tar.gz" "$platform"
+              tar czf "$BINARY_NAME-$platform.tar.gz" "$platform"/*
             fi
           done
-          cd ..
 
       - name: Generate SHA256 checksums
         run: |
           cd release
-          sha256sum ../*.{zip,tar.gz} > ../checksums.txt
+          sha256sum $BINARY_NAME-*.{zip,tar.gz} > checksums.txt
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            *.zip
-            *.tar.gz
-            checksums.txt
+            release/${{ env.BINARY_NAME }}-*.zip
+            release/${{ env.BINARY_NAME }}-*.tar.gz
+            release/checksums.txt
           draft: false
           prerelease: false
           generate_release_notes: true
@@ -108,10 +107,14 @@ jobs:
       - name: Check Release Assets
         run: |
           echo "Verifying release assets..."
-          for file in *.{zip,tar.gz}; do
-            if [ ! -f "$file" ]; then
-              echo "❌ Missing release asset: $file"
-              exit 1
-            fi
+          cd release
+          for ext in zip tar.gz; do
+            for file in $BINARY_NAME-*.$ext; do
+              if [ ! -f "$file" ]; then
+                echo "❌ Missing release asset: $file"
+                exit 1
+              else
+                echo "✅ Found release asset: $file"
+              fi
+            done
           done
-          echo "✅ All release assets verified"
