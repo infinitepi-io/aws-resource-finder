@@ -1,0 +1,24 @@
+{
+    "resources": [
+        {
+            "type": "AWS::Lambda::Function",
+            "display": "Lambda Function"
+        },
+        {
+            "type": "AWS::S3::Bucket",
+            "display": "S3 Bucket"
+        },
+        {
+            "type": "AWS::EC2::Instance",
+            "display": "EC2 Instance"
+        },
+        {
+            "type": "AWS::DynamoDB::Table",
+            "display": "DynamoDB Table"
+        },
+        {
+            "type": "AWS::RDS::DBInstance",
+            "display": "RDS Instance"
+        }
+    ]
+}
