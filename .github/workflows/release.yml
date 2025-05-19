@@ -16,7 +16,7 @@ jobs:
       BINARY_NAME: aws-resource-finder
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -41,18 +41,32 @@ jobs:
           # Create directories for each platform
           for platform in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64; do
             mkdir -p "release/$platform"
-            # Copy binary
             if [[ $platform == windows* ]]; then
-              cp "bin/$BINARY_NAME-$platform.exe" "release/$platform/"
+              binary_name="$BINARY_NAME-$platform.exe"
             else
-              cp "bin/$BINARY_NAME-$platform" "release/$platform/"
+              binary_name="$BINARY_NAME-$platform"
             fi
+            # Copy binary with proper extension
+            cp "bin/$binary_name" "release/$platform/"
             # Copy required assets
             cp -r template "release/$platform/"
             cp -r config "release/$platform/"
           done
-          # Create archives
+
+          # Generate checksums for each binary
           cd release
+          for platform in */; do
+            platform=${platform%/}
+            cd "$platform"
+            if [[ $platform == windows* ]]; then
+              sha256sum "$BINARY_NAME-$platform.exe" > checksums.txt
+            else
+              sha256sum "$BINARY_NAME-$platform" > checksums.txt
+            fi
+            cd ..
+          done
+
+          # Create archives
           for platform in */; do
             platform=${platform%/}
             if [[ $platform == windows* ]]; then
@@ -62,9 +76,7 @@ jobs:
             fi
           done
 
-      - name: Generate SHA256 checksums
-        run: |
-          cd release
+          # Generate overall checksums for archives
           sha256sum $BINARY_NAME-*.{zip,tar.gz} > checksums.txt
 
       - name: Create Release
@@ -91,14 +103,17 @@ jobs:
             - Binary executable
             - Template files
             - Configuration files
+            - Binary checksum file (checksums.txt)
             
             ### SHA256 Checksums
-            See checksums.txt for file verification.
+            Archive checksums are provided in the checksums.txt file.
+            Each archive also contains its own checksums.txt for binary verification.
             
             ### Installation
             1. Download the appropriate archive for your platform
             2. Extract the contents
-            3. Run the binary
+            3. Verify the binary using checksums.txt
+            4. Run the binary
             
             For detailed instructions, see the README.md
         env:
