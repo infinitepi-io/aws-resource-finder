@@ -8,7 +8,7 @@ A web-based tool built in Go that helps you discover and visualize AWS resources
 - 🌐 Web-based interface for easy access
 - 📊 Table view of resource details
 - ⚡ Real-time resource querying using AWS Config
-- 🔄 Support for multiple AWS resource types (Lambda, S3, EC2, etc.)
+- 🔄 Support for multiple AWS resource types (Lambda, S3, EC2 for now more resource types will be added in future.)
 
 ## Prerequisites
 
