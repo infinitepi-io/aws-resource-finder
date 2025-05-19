@@ -5,7 +5,11 @@ BINARY_NAME=aws-resource-finder
 
 build:
 	@mkdir -p bin
-	go build -v -o bin/$(BINARY_NAME)-$(GOOS)-$(GOARCH) -ldflags "-X main.Version=$(VERSION)" .
+	if [ "$(GOOS)" = "windows" ]; then \
+		go build -v -o bin/$(BINARY_NAME)-$(GOOS)-$(GOARCH).exe -ldflags "-X main.Version=$(VERSION)" . ; \
+	else \
+		go build -v -o bin/$(BINARY_NAME)-$(GOOS)-$(GOARCH) -ldflags "-X main.Version=$(VERSION)" . ; \
+	fi
 	@echo "Build complete: bin/$(BINARY_NAME)-$(GOOS)-$(GOARCH)"
 
 build-all:
