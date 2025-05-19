@@ -35,7 +35,7 @@ go mod download
 Ensure you have AWS credentials configured either through:
 - AWS CLI (`aws configure`)
 - Environment variables
-- IAM role
+- IAM role Support(Coming Soon!)
 
 The application needs permissions to:
 - Query AWS Config
