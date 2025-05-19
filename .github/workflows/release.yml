@@ -38,16 +38,25 @@ jobs:
         run: |
           mkdir -p release
           make build-all
+          # List files in bin directory for debugging
+          ls -la bin/
           # Create directories for each platform
           for platform in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64; do
             mkdir -p "release/$platform"
+            # Copy binary with proper name
             if [[ $platform == windows* ]]; then
-              binary_name="$BINARY_NAME-$platform.exe"
+              cp "bin/$BINARY_NAME-$platform.exe" "release/$platform/" || {
+                echo "Failed to copy Windows binary. Contents of bin/:"
+                ls -la bin/
+                exit 1
+              }
             else
-              binary_name="$BINARY_NAME-$platform"
+              cp "bin/$BINARY_NAME-$platform" "release/$platform/" || {
+                echo "Failed to copy binary for $platform. Contents of bin/:"
+                ls -la bin/
+                exit 1
+              }
             fi
-            # Copy binary with proper extension
-            cp "bin/$binary_name" "release/$platform/"
             # Copy required assets
             cp -r template "release/$platform/"
             cp -r config "release/$platform/"
